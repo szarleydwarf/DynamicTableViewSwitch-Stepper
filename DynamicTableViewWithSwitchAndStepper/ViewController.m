@@ -16,14 +16,17 @@
 @property NSMutableArray*rowsValues;
 
 @property BOOL isOn;
-@property int newStepValue;
-@property int oldStepValue;
+@property int newStepValueForSection;
+@property int oldStepValueForSection;
+@property int newStepValueForRows;
+@property int oldStepValueForRows;
 
+- (IBAction)resetStepperWhenStatusChange:(UISwitch *)sender;
 - (IBAction)doStep:(UIStepper *)sender;
 - (void)updateSections;
 - (void)updateRows;
 @end
-/*
+/* Requirements:
  When the switch is ON
  - incrementing stepper add new section with no rows, when
  - decrementing - section is removed
@@ -33,52 +36,78 @@
  - decrementing last row in each section should be removed
  */
 @implementation ViewController
-@synthesize isOn, newStepValue, oldStepValue, stepper, switcher, mainTableView;
+@synthesize isOn, newStepValueForSection, oldStepValueForSection, stepper, switcher, mainTableView;
 
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self.switcher setOn: true];
     [self.stepper setValue:0];
     
-    self.oldStepValue = 0;
+    self.oldStepValueForSection = 0;
+    self.oldStepValueForRows = 0;
+    
     self.dictionary = [[NSMutableDictionary alloc]init];
     self.rowsValues = [[NSMutableArray alloc]init];
 }
 
 
+- (IBAction)resetStepperWhenStatusChange:(UISwitch *)sender {
+    if (sender.isOn) {
+        [self.stepper setValue:self.oldStepValueForSection];
+    } else if (!sender.isOn) {
+        [self.stepper setValue:self.oldStepValueForRows];
+    }
+}
+
 - (IBAction)doStep:(UIStepper *)sender {
-    self.newStepValue = sender.value;
     if (self.switcher.isOn) {
+        self.newStepValueForSection = sender.value;
         [self updateSections];
     } else if (!self.switcher.isOn) {
+        self.newStepValueForRows = sender.value;
         [self updateRows];
     }
 }
 
 - (void) updateSections {
-//    compare oldStepValue with newStep
     NSMutableArray*rows = [[NSMutableArray alloc]init];
+    NSString*sectionFormatedString = @"Section %d";
     
-//    if new is bigger add key into dictionary
-    if (self.oldStepValue < self.newStepValue) {
-        NSString*key = [[NSString alloc] initWithFormat:@"Section %d", self.newStepValue];
-        NSLog(@"updateSection %@", key);
+    if (self.oldStepValueForSection < self.newStepValueForSection) {
+        NSString*key = [[NSString alloc] initWithFormat:sectionFormatedString, self.newStepValueForSection];
         [self.dictionary setValue:rows forKey:key];
     }
-//    if new smaller remove key from dictionary
-    else if (self.oldStepValue > self.newStepValue) {
-        NSString*key = [[NSString alloc] initWithFormat:@"Section %d", self.oldStepValue];
-        NSLog(@"updateSection %@", key);
+    else if (self.oldStepValueForSection > self.newStepValueForSection) {
+        NSString*key = [[NSString alloc] initWithFormat:sectionFormatedString, self.oldStepValueForSection];
         [self.dictionary removeObjectForKey:key];
     }
-//    update table
     [self.mainTableView reloadData];
-//    update oldStepValue
-    self.oldStepValue = self.newStepValue;
+    self.oldStepValueForSection = self.newStepValueForSection;
 }
 
 - (void) updateRows {
-    
+    //    test if there are any sections
+    if([[self.dictionary allKeys]count] > 0){
+        NSMutableArray*rows = [[NSMutableArray alloc]initWithArray:self.rowsValues];
+        NSString*sectionFormatedString = @"Row %d";
+        
+        if(self.oldStepValueForRows < self.newStepValueForRows){
+            NSString*key = [[NSString alloc] initWithFormat:sectionFormatedString, self.newStepValueForRows];
+            [rows addObject:key];
+        } else if (self.oldStepValueForRows > self.newStepValueForRows) {
+            NSString*key = [[NSString alloc] initWithFormat:sectionFormatedString, self.oldStepValueForRows];
+            [rows removeObject:key];
+        }
+        
+        NSArray*keys = [self.dictionary allKeys];
+        for(int i = 0; i < [keys count]; i++) {
+            [self.dictionary setValue:rows forKey:keys[i]];
+        }
+        
+        [self.mainTableView reloadData];
+        self.oldStepValueForRows = self.newStepValueForRows;
+        self.rowsValues = rows;        
+    }
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {

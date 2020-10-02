@@ -17,6 +17,9 @@
                         <subviews>
                             <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="0Zq-DS-mPz">
                                 <rect key="frame" x="60" y="44" width="51" height="31"/>
+                                <connections>
+                                    <action selector="resetStepperWhenStatusChange:" destination="BYZ-38-t0r" eventType="valueChanged" id="oFr-bS-3c3"/>
+                                </connections>
                             </switch>
                             <stepper opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" maximumValue="100" translatesAutoresizingMaskIntoConstraints="NO" id="sS2-PP-Q5A">
                                 <rect key="frame" x="260" y="44" width="94" height="32"/>
