@@ -13,10 +13,11 @@
 @property (weak, nonatomic) IBOutlet UIStepper *stepper;
 @property (weak, nonatomic) IBOutlet UITableView *mainTableView;
 @property NSMutableDictionary*dictionary;
+@property NSMutableArray*rowsValues;
 
 @property BOOL isOn;
-@property int step;
-@property int previousStepValue;
+@property int newStepValue;
+@property int oldStepValue;
 
 - (IBAction)doStep:(UIStepper *)sender;
 - (void)updateSections;
@@ -32,20 +33,21 @@
  - decrementing last row in each section should be removed
  */
 @implementation ViewController
-@synthesize isOn, step, previousStepValue, stepper, switcher, mainTableView;
+@synthesize isOn, newStepValue, oldStepValue, stepper, switcher, mainTableView;
 
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self.switcher setOn: true];
     [self.stepper setValue:0];
     
-    self.previousStepValue = 0;
+    self.oldStepValue = 0;
     self.dictionary = [[NSMutableDictionary alloc]init];
+    self.rowsValues = [[NSMutableArray alloc]init];
 }
 
 
 - (IBAction)doStep:(UIStepper *)sender {
-    self.step = sender.value;
+    self.newStepValue = sender.value;
     if (self.switcher.isOn) {
         [self updateSections];
     } else if (!self.switcher.isOn) {
@@ -54,7 +56,23 @@
 }
 
 - (void) updateSections {
+//    compare oldStepValue with newStep
+    NSString*key = [[NSString alloc] initWithFormat:@"Section %d", self.newStepValue];
+    NSLog(@"updateSection %@", key);
+    NSMutableArray*rows = [[NSMutableArray alloc]init];
     
+//    if new is bigger add key into dictionary
+    if (self.oldStepValue < self.newStepValue) {
+        [self.dictionary setValue:rows forKey:key];
+    }
+//    if new smaller remove key from dictionary
+    else if (self.oldStepValue > self.newStepValue) {
+        [self.dictionary removeObjectForKey:key];
+    }
+//    update table
+    [self.mainTableView reloadData];
+//    update oldStepValue
+    self.oldStepValue = self.newStepValue;
 }
 
 - (void) updateRows {
@@ -69,8 +87,18 @@
     
     NSArray*dictionaryKeys = [self.dictionary allKeys];
     int count = (int)[[self.dictionary valueForKey:dictionaryKeys[section]]count];
+    
     return count;
 }
+
+- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
+    NSArray*keys = [self.dictionary allKeys];
+    keys = [keys sortedArrayUsingComparator:^NSComparisonResult(NSString*s1, NSString*s2) {
+        return [s1 compare:s2 options:(NSNumericSearch)];
+    }];
+    return [[NSString alloc] initWithFormat: @"%@", keys[section]];
+}
+
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     static NSString * cellIdentifer = @"cell";
