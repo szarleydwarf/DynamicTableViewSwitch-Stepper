@@ -57,16 +57,18 @@
 
 - (void) updateSections {
 //    compare oldStepValue with newStep
-    NSString*key = [[NSString alloc] initWithFormat:@"Section %d", self.newStepValue];
-    NSLog(@"updateSection %@", key);
     NSMutableArray*rows = [[NSMutableArray alloc]init];
     
 //    if new is bigger add key into dictionary
     if (self.oldStepValue < self.newStepValue) {
+        NSString*key = [[NSString alloc] initWithFormat:@"Section %d", self.newStepValue];
+        NSLog(@"updateSection %@", key);
         [self.dictionary setValue:rows forKey:key];
     }
 //    if new smaller remove key from dictionary
     else if (self.oldStepValue > self.newStepValue) {
+        NSString*key = [[NSString alloc] initWithFormat:@"Section %d", self.oldStepValue];
+        NSLog(@"updateSection %@", key);
         [self.dictionary removeObjectForKey:key];
     }
 //    update table
