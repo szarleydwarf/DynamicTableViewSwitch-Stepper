@@ -51,7 +51,6 @@
     if (sender.isOn) {
         [self.stepper setValue:self.oldStepValueForSection];
     } else if (!sender.isOn) {
-        NSLog(@"old&new %d - %d", self.oldStepValueForRows, self.newStepValueForRows);
         [self.stepper setValue:self.oldStepValueForRows];
     }
 }
@@ -61,7 +60,6 @@
         self.newStepValueForSection = sender.value;
         [self updateSections];
     } else if (!self.switcher.isOn) {
-        NSLog(@"rows value> %f",sender.value);
         self.newStepValueForRows = sender.value;
         BOOL addRow = (self.oldStepValueForRows > self.newStepValueForRows) ? false : true;
         [self updateRows: addRow];
@@ -92,14 +90,12 @@
         
         for(int i = 0; i < dictionarySize; i++){
             NSMutableArray*value = [self.dictionary valueForKey:keys[i]];
-            //find if you need to add or remove object
             if (addRow) {
                 NSString*key = [[NSString alloc] initWithFormat:sectionFormatedString, value.count+1];
                 [value addObject:key];
             } else if (!addRow) {
                 NSString*key = [[NSString alloc] initWithFormat:sectionFormatedString, value.count];
                 [value removeObject:key];
-//                [self.dictionary removeObjectForKey:key];
             }
             [self.dictionary setValue:value forKey:keys[i]];
         }
