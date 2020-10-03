@@ -13,9 +13,8 @@
 @property (weak, nonatomic) IBOutlet UIStepper *stepper;
 @property (weak, nonatomic) IBOutlet UITableView *mainTableView;
 @property NSMutableDictionary*dictionary;
-@property NSMutableArray*rowsValues;
+//@property NSMutableArray*rowsValues;
 
-@property BOOL isOn;
 @property int newStepValueForSection;
 @property int oldStepValueForSection;
 @property int newStepValueForRows;
@@ -36,7 +35,7 @@
  - decrementing last row in each section should be removed
  */
 @implementation ViewController
-@synthesize isOn, newStepValueForSection, oldStepValueForSection, stepper, switcher, mainTableView;
+@synthesize newStepValueForSection, oldStepValueForSection, stepper, switcher, mainTableView;
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -47,9 +46,8 @@
     self.oldStepValueForRows = 0;
     
     self.dictionary = [[NSMutableDictionary alloc]init];
-    self.rowsValues = [[NSMutableArray alloc]init];
+//    self.rowsValues = [[NSMutableArray alloc]init];
 }
-
 
 - (IBAction)resetStepperWhenStatusChange:(UISwitch *)sender {
     if (sender.isOn) {
@@ -61,10 +59,12 @@
 
 - (IBAction)doStep:(UIStepper *)sender {
     if (self.switcher.isOn) {
-        self.newStepValueForSection = sender.value;
+        NSLog(@"section value> %f",sender.value);
+self.newStepValueForSection = sender.value;
         [self updateSections];
     } else if (!self.switcher.isOn) {
-        self.newStepValueForRows = sender.value;
+        NSLog(@"rows value> %f",sender.value);
+//        self.newStepValueForRows = sender.value;
         [self updateRows];
     }
 }
@@ -87,26 +87,24 @@
 
 - (void) updateRows {
     //    test if there are any sections
-    if([[self.dictionary allKeys]count] > 0){
-        NSMutableArray*rows = [[NSMutableArray alloc]initWithArray:self.rowsValues];
-        NSString*sectionFormatedString = @"Row %d";
-        
-        if(self.oldStepValueForRows < self.newStepValueForRows){
-            NSString*key = [[NSString alloc] initWithFormat:sectionFormatedString, self.newStepValueForRows];
-            [rows addObject:key];
-        } else if (self.oldStepValueForRows > self.newStepValueForRows) {
-            NSString*key = [[NSString alloc] initWithFormat:sectionFormatedString, self.oldStepValueForRows];
-            [rows removeObject:key];
-        }
-        
+    int dictionarySize = (int)[[self.dictionary allKeys]count];
+    if(dictionarySize > 0){
+//        check if section has any rows ad new row
         NSArray*keys = [self.dictionary allKeys];
-        for(int i = 0; i < [keys count]; i++) {
-            [self.dictionary setValue:rows forKey:keys[i]];
+        NSString*sectionFormatedString = @"Row %d";
+              
+        for(int i = 0; i < dictionarySize; i++){
+            NSLog(@"keys value> %@",keys);
+            NSMutableArray*value = [self.dictionary valueForKey:keys[i]];
+            //find if you need to add or remove object
+            NSString*key = [[NSString alloc] initWithFormat:sectionFormatedString, value.count];
+            
+            [value addObject:key];
+            [self.dictionary setValue:value forKey:keys[i]];
+
         }
-        
         [self.mainTableView reloadData];
-        self.oldStepValueForRows = self.newStepValueForRows;
-        self.rowsValues = rows;        
+        
     }
 }
 
@@ -123,10 +121,12 @@
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
+    
     NSArray*keys = [self.dictionary allKeys];
     keys = [keys sortedArrayUsingComparator:^NSComparisonResult(NSString*s1, NSString*s2) {
         return [s1 compare:s2 options:(NSNumericSearch)];
     }];
+    
     return [[NSString alloc] initWithFormat: @"%@", keys[section]];
 }
 
