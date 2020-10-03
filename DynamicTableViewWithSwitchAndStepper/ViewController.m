@@ -13,7 +13,6 @@
 @property (weak, nonatomic) IBOutlet UIStepper *stepper;
 @property (weak, nonatomic) IBOutlet UITableView *mainTableView;
 @property NSMutableDictionary*dictionary;
-//@property NSMutableArray*rowsValues;
 
 @property int newStepValueForSection;
 @property int oldStepValueForSection;
@@ -23,7 +22,7 @@
 - (IBAction)resetStepperWhenStatusChange:(UISwitch *)sender;
 - (IBAction)doStep:(UIStepper *)sender;
 - (void)updateSections;
-- (void)updateRows;
+- (void)updateRows:(BOOL) addRow;
 @end
 /* Requirements:
  When the switch is ON
@@ -46,26 +45,26 @@
     self.oldStepValueForRows = 0;
     
     self.dictionary = [[NSMutableDictionary alloc]init];
-//    self.rowsValues = [[NSMutableArray alloc]init];
 }
 
 - (IBAction)resetStepperWhenStatusChange:(UISwitch *)sender {
     if (sender.isOn) {
         [self.stepper setValue:self.oldStepValueForSection];
     } else if (!sender.isOn) {
+        NSLog(@"old&new %d - %d", self.oldStepValueForRows, self.newStepValueForRows);
         [self.stepper setValue:self.oldStepValueForRows];
     }
 }
 
 - (IBAction)doStep:(UIStepper *)sender {
     if (self.switcher.isOn) {
-        NSLog(@"section value> %f",sender.value);
-self.newStepValueForSection = sender.value;
+        self.newStepValueForSection = sender.value;
         [self updateSections];
     } else if (!self.switcher.isOn) {
         NSLog(@"rows value> %f",sender.value);
-//        self.newStepValueForRows = sender.value;
-        [self updateRows];
+        self.newStepValueForRows = sender.value;
+        BOOL addRow = (self.oldStepValueForRows > self.newStepValueForRows) ? false : true;
+        [self updateRows: addRow];
     }
 }
 
@@ -85,26 +84,27 @@ self.newStepValueForSection = sender.value;
     self.oldStepValueForSection = self.newStepValueForSection;
 }
 
-- (void) updateRows {
-    //    test if there are any sections
+- (void) updateRows:(BOOL) addRow {
     int dictionarySize = (int)[[self.dictionary allKeys]count];
     if(dictionarySize > 0){
-//        check if section has any rows ad new row
         NSArray*keys = [self.dictionary allKeys];
         NSString*sectionFormatedString = @"Row %d";
-              
+        
         for(int i = 0; i < dictionarySize; i++){
-            NSLog(@"keys value> %@",keys);
             NSMutableArray*value = [self.dictionary valueForKey:keys[i]];
             //find if you need to add or remove object
-            NSString*key = [[NSString alloc] initWithFormat:sectionFormatedString, value.count];
-            
-            [value addObject:key];
+            if (addRow) {
+                NSString*key = [[NSString alloc] initWithFormat:sectionFormatedString, value.count+1];
+                [value addObject:key];
+            } else if (!addRow) {
+                NSString*key = [[NSString alloc] initWithFormat:sectionFormatedString, value.count];
+                [value removeObject:key];
+//                [self.dictionary removeObjectForKey:key];
+            }
             [self.dictionary setValue:value forKey:keys[i]];
-
         }
         [self.mainTableView reloadData];
-        
+        self.oldStepValueForRows = self.newStepValueForRows;
     }
 }
 
