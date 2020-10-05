@@ -12,7 +12,7 @@
 @property (weak, nonatomic) IBOutlet UISwitch *switcher;
 @property (weak, nonatomic) IBOutlet UIStepper *stepper;
 @property (weak, nonatomic) IBOutlet UITableView *mainTableView;
-@property NSMutableDictionary*dictionary;
+@property NSMutableArray*arrayTopLevel;
 
 @property int newStepValueForSection;
 @property int oldStepValueForSection;
@@ -44,7 +44,7 @@
     self.oldStepValueForSection = 0;
     self.oldStepValueForRows = 0;
     
-    self.dictionary = [[NSMutableDictionary alloc]init];
+    self.arrayTopLevel = [[NSMutableArray alloc]init];
 }
 
 - (IBAction)resetStepperWhenStatusChange:(UISwitch *)sender {
@@ -68,75 +68,56 @@
 
 - (void) updateSections {
     NSMutableArray*rows = [[NSMutableArray alloc]init];
-    NSString*sectionFormatedString = @"Section %d";
-    
+
     if (self.oldStepValueForSection < self.newStepValueForSection) {
-        NSString*key = [[NSString alloc] initWithFormat:sectionFormatedString, self.newStepValueForSection];
-        [self.dictionary setValue:rows forKey:key];
+        [self.arrayTopLevel addObject:rows];
     }
     else if (self.oldStepValueForSection > self.newStepValueForSection) {
-        NSString*key = [[NSString alloc] initWithFormat:sectionFormatedString, self.oldStepValueForSection];
-        [self.dictionary removeObjectForKey:key];
+        [self.arrayTopLevel removeLastObject];
     }
     [self.mainTableView reloadData];
     self.oldStepValueForSection = self.newStepValueForSection;
 }
 
 - (void) updateRows:(BOOL) addRow {
-    int dictionarySize = (int)[[self.dictionary allKeys]count];
-    if(dictionarySize > 0){
-        NSArray*keys = [self.dictionary allKeys];
-        NSString*sectionFormatedString = @"Row %d";
-        
-        for(int i = 0; i < dictionarySize; i++){
-            NSMutableArray*value = [self.dictionary valueForKey:keys[i]];
+    int arraySize = (int)[self.arrayTopLevel count];
+    if(arraySize > 0){
+        for (int i = 0; i < arraySize; i++) {
             if (addRow) {
-                NSString*key = [[NSString alloc] initWithFormat:sectionFormatedString, value.count+1];
-                [value addObject:key];
+                int size = (int)[self.arrayTopLevel[i] count];
+                [self.arrayTopLevel[i] addObject:[[NSString alloc]initWithFormat:@"Row # %d", size++]];
             } else if (!addRow) {
-                NSString*key = [[NSString alloc] initWithFormat:sectionFormatedString, value.count];
-                [value removeObject:key];
+                [self.arrayTopLevel[i] removeLastObject];
             }
-            [self.dictionary setValue:value forKey:keys[i]];
         }
+        
         [self.mainTableView reloadData];
         self.oldStepValueForRows = self.newStepValueForRows;
     }
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return [[self.dictionary allKeys]count];
+    return [self.arrayTopLevel count];
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
-    
-    NSArray*dictionaryKeys = [self.dictionary allKeys];
-    int count = (int)[[self.dictionary valueForKey:dictionaryKeys[section]]count];
-    
-    return count;
+    return [self.arrayTopLevel[section] count];;
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
-    
-    NSArray*keys = [self.dictionary allKeys];
-    keys = [keys sortedArrayUsingComparator:^NSComparisonResult(NSString*s1, NSString*s2) {
-        return [s1 compare:s2 options:(NSNumericSearch)];
-    }];
-    
-    return [[NSString alloc] initWithFormat: @"%@", keys[section]];
+    return  [[NSString alloc]initWithFormat:@"Section %ld", section];
 }
 
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     static NSString * cellIdentifer = @"cell";
+    
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifer forIndexPath:indexPath ];
     if (cell == nil) {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellIdentifer];
     }
-    NSArray*dictionaryKeys = [self.dictionary allKeys];
-    NSArray*valuesForKey = [self.dictionary valueForKey:dictionaryKeys[indexPath.section]];
     
-    cell.textLabel.text = valuesForKey[indexPath.row];
+    cell.textLabel.text = self.arrayTopLevel[indexPath.section][indexPath.row];
     
     return cell;
 }
